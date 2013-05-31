@@ -2304,6 +2304,9 @@ pa_sink *pa_alsa_sink_new(pa_module *m, pa_modargs *ma, const char*driver, pa_ca
         goto fail;
     }
 
+    if (!pa_proplist_contains(u->sink->proplist, PA_PROP_DEVICE_DESCRIPTION))
+        pa_proplist_sets(u->sink->proplist, PA_PROP_DEVICE_DESCRIPTION, u->sink->name);
+
     if (pa_modargs_get_value_u32(ma, "deferred_volume_safety_margin",
                                  &u->sink->thread_info.volume_change_safety_margin) < 0) {
         pa_log("Failed to parse deferred_volume_safety_margin parameter");
