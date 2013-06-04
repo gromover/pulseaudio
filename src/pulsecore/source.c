@@ -535,6 +535,7 @@ void pa_source_put(pa_source *s) {
     /* The following fields must be initialized properly when calling _put() */
     pa_assert(s->asyncmsgq);
     pa_assert(s->thread_info.min_latency <= s->thread_info.max_latency);
+    pa_assert(pa_proplist_contains(s->proplist, PA_PROP_DEVICE_DESCRIPTION));
 
     /* Generally, flags should be initialized via pa_source_new(). As a
      * special exception we allow some volume related flags to be set
