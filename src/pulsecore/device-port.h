@@ -33,6 +33,8 @@ typedef struct pa_device_port pa_device_port;
 #include <inttypes.h>
 
 #include <pulse/def.h>
+
+#include <pulsecore/device-class.h>
 #include <pulsecore/object.h>
 #include <pulsecore/hashmap.h>
 #include <pulsecore/core.h>
@@ -45,6 +47,7 @@ struct pa_device_port {
 
     char *name;
     char *description;
+    pa_device_class_t device_class;
 
     unsigned priority;
     pa_available_t available;         /* PA_AVAILABLE_UNKNOWN, PA_AVAILABLE_NO or PA_AVAILABLE_YES */
@@ -65,6 +68,7 @@ PA_DECLARE_PUBLIC_CLASS(pa_device_port);
 typedef struct pa_device_port_new_data {
     char *name;
     char *description;
+    pa_device_class_t device_class;
     pa_available_t available;
     pa_direction_t direction;
 } pa_device_port_new_data;
@@ -72,6 +76,7 @@ typedef struct pa_device_port_new_data {
 pa_device_port_new_data *pa_device_port_new_data_init(pa_device_port_new_data *data);
 void pa_device_port_new_data_set_name(pa_device_port_new_data *data, const char *name);
 void pa_device_port_new_data_set_description(pa_device_port_new_data *data, const char *description);
+void pa_device_port_new_data_set_device_class(pa_device_port_new_data *data, pa_device_class_t device_class);
 void pa_device_port_new_data_set_available(pa_device_port_new_data *data, pa_available_t available);
 void pa_device_port_new_data_set_direction(pa_device_port_new_data *data, pa_direction_t direction);
 void pa_device_port_new_data_done(pa_device_port_new_data *data);

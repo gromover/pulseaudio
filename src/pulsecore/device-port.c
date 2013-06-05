@@ -30,6 +30,7 @@ pa_device_port_new_data *pa_device_port_new_data_init(pa_device_port_new_data *d
     pa_assert(data);
 
     pa_zero(*data);
+    data->device_class = PA_DEVICE_CLASS_UNKNOWN;
     data->available = PA_AVAILABLE_UNKNOWN;
     return data;
 }
@@ -46,6 +47,12 @@ void pa_device_port_new_data_set_description(pa_device_port_new_data *data, cons
 
     pa_xfree(data->description);
     data->description = pa_xstrdup(description);
+}
+
+void pa_device_port_new_data_set_device_class(pa_device_port_new_data *data, pa_device_class_t device_class) {
+    pa_assert(data);
+
+    data->device_class = device_class;
 }
 
 void pa_device_port_new_data_set_available(pa_device_port_new_data *data, pa_available_t available) {
@@ -122,6 +129,7 @@ pa_device_port *pa_device_port_new(pa_core *c, pa_device_port_new_data *data, si
     data->name = NULL;
     p->description = data->description;
     data->description = NULL;
+    p->device_class = data->device_class;
     p->core = c;
     p->card = NULL;
     p->priority = 0;
