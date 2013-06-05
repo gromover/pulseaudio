@@ -51,6 +51,21 @@ static const char * const string_table[PA_DEVICE_CLASS_MAX] = {
     [PA_DEVICE_CLASS_TUNER] = "tuner"
 };
 
+static const char * const form_factor_table[PA_DEVICE_CLASS_MAX] = {
+    [PA_DEVICE_CLASS_COMPUTER] = "computer",
+    [PA_DEVICE_CLASS_PHONE] = "handset",
+    [PA_DEVICE_CLASS_HEADSET] = "headset",
+    [PA_DEVICE_CLASS_HANDSFREE] = "hands-free",
+    [PA_DEVICE_CLASS_MICROPHONE] = "microphone",
+    [PA_DEVICE_CLASS_SPEAKERS] = "speaker",
+    [PA_DEVICE_CLASS_HEADPHONES] = "headphone",
+    [PA_DEVICE_CLASS_PORTABLE] = "portable",
+    [PA_DEVICE_CLASS_CAR] = "car",
+    [PA_DEVICE_CLASS_HIFI] = "hifi",
+    [PA_DEVICE_CLASS_VIDEO_CAMERA] = "webcam",
+    [PA_DEVICE_CLASS_VIDEO_DISPLAY_AND_SPEAKERS] = "tv"
+};
+
 pa_device_class_t pa_device_class_from_string(const char *str) {
     unsigned i;
 
@@ -66,4 +81,8 @@ pa_device_class_t pa_device_class_from_string(const char *str) {
 
 const char *pa_device_class_to_string(pa_device_class_t class) {
     return string_table[class];
+}
+
+const char *pa_device_class_to_form_factor_string(pa_device_class_t class) {
+    return form_factor_table[class];
 }

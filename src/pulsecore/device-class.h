@@ -67,4 +67,22 @@ typedef enum {
 pa_device_class_t pa_device_class_from_string(const char *str);
 const char *pa_device_class_to_string(pa_device_class_t class);
 
+/* This function produces a string that is suitable to be used as the
+ * PA_PROP_DEVICE_FORM_FACTOR property. Not all device classes are suitable,
+ * because the documentation for the property defines a fixed list of possible
+ * values, and that list doesn't contain all the device classes that we have
+ * available. If the device class can't be converted to one of the listed form
+ * factors, this function returns NULL.
+ *
+ * We possibly could change the documentation of the DEVICE_FORM_FACTOR
+ * property, but that would be strictly speaking an ABI break. Also, it's quite
+ * nice to have a device class enumeration that isn't exposed to clients,
+ * because it allows us to easily tune the enumeration contents without
+ * worrying about client compatibility, so I'm not eager to force the device
+ * class enumeration to be the same thing as the form factor property, even if
+ * they are pretty similar (also note that they may be similar, but definitely
+ * not the same thing, because e.g. "tuner" is a valid device class, but not a
+ * form factor). */
+const char *pa_device_class_to_form_factor_string(pa_device_class_t class);
+
 #endif
