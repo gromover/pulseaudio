@@ -34,6 +34,7 @@
 #include <pulse/xmalloc.h>
 
 #include <pulsecore/sink.h>
+#include <pulsecore/sink-node.h>
 #include <pulsecore/module.h>
 #include <pulsecore/core-util.h>
 #include <pulsecore/modargs.h>
@@ -77,6 +78,7 @@ struct userdata {
     pa_core *core;
     pa_module *module;
     pa_sink *sink;
+    pa_sink_node *sink_node;
 
     unsigned channels;
 
@@ -451,6 +453,8 @@ int pa__init(pa_module*m) {
     pa_sink_set_fixed_latency(u->sink, pa_bytes_to_usec(n, &u->sink->sample_spec));
     pa_sink_put(u->sink);
 
+    u->sink_node = pa_sink_node_new(u->sink, "jack-output");
+
     if (ports)
         jack_free(ports);
     pa_modargs_free(ma);
@@ -485,6 +489,9 @@ void pa__done(pa_module*m) {
 
     if (!(u = m->userdata))
         return;
+
+    if (u->sink_node)
+        pa_sink_node_free(u->sink_node);
 
     if (u->sink)
         pa_sink_unlink(u->sink);

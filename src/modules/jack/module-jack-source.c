@@ -34,6 +34,7 @@
 #include <pulse/xmalloc.h>
 
 #include <pulsecore/source.h>
+#include <pulsecore/source-node.h>
 #include <pulsecore/module.h>
 #include <pulsecore/core-util.h>
 #include <pulsecore/modargs.h>
@@ -67,6 +68,7 @@ struct userdata {
     pa_core *core;
     pa_module *module;
     pa_source *source;
+    pa_source_node *source_node;
 
     unsigned channels;
 
@@ -397,6 +399,8 @@ int pa__init(pa_module*m) {
     pa_source_set_fixed_latency(u->source, pa_bytes_to_usec(n, &u->source->sample_spec));
     pa_source_put(u->source);
 
+    u->source_node = pa_source_node_new(u->source, "jack-input");
+
     if (ports)
         jack_free(ports);
     pa_modargs_free(ma);
@@ -430,6 +434,9 @@ void pa__done(pa_module*m) {
 
     if (!(u = m->userdata))
         return;
+
+    if (u->source_node)
+        pa_source_node_free(u->source_node);
 
     if (u->source)
         pa_source_unlink(u->source);
