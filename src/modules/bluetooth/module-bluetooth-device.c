@@ -35,8 +35,10 @@
 #include <pulse/timeval.h>
 #include <pulse/xmalloc.h>
 
+#include <pulsecore/dynarray.h>
 #include <pulsecore/i18n.h>
 #include <pulsecore/module.h>
+#include <pulsecore/port-node.h>
 #include <pulsecore/modargs.h>
 #include <pulsecore/core-rtclock.h>
 #include <pulsecore/core-util.h>
@@ -158,6 +160,7 @@ struct userdata {
     pa_card *card;
     pa_sink *sink;
     pa_source *source;
+    pa_dynarray *nodes;
 
     pa_thread_mq thread_mq;
     pa_rtpoll *rtpoll;
@@ -2396,6 +2399,31 @@ static pa_hook_result_t discovery_hook_cb(pa_bluetooth_discovery *y, const pa_bl
     return PA_HOOK_OK;
 }
 
+static void create_nodes(struct userdata *u) {
+    void *state;
+    pa_device_port *port;
+
+    pa_assert(u);
+
+    u->nodes = pa_dynarray_new((pa_free_cb_t) pa_port_node_free);
+
+    PA_HASHMAP_FOREACH(port, u->card->ports, state) {
+        pa_port_node *node;
+
+        if ((node = pa_port_node_new(port, port->direction == PA_DIRECTION_OUTPUT ? "alsa-output" : "alsa-input")))
+            pa_dynarray_append(u->nodes, node);
+        else {
+            /* We could perhaps just ignore failures, but it's nice to be able
+             * to assume that nodes exist either for all or none of the
+             * ports. */
+            pa_log("Failed to create a node for port %s. Removing all nodes of card %s.", port->name, u->card->name);
+            pa_dynarray_free(u->nodes);
+            u->nodes = NULL;
+            break;
+        }
+    }
+}
+
 int pa__init(pa_module* m) {
     pa_modargs *ma;
     uint32_t channels;
@@ -2511,12 +2539,16 @@ int pa__init(pa_module* m) {
         if (start_thread(u) < 0)
             goto off;
 
+    create_nodes(u);
+
     return 0;
 
 off:
     stop_thread(u);
 
     pa_assert_se(pa_card_set_profile(u->card, "off", false) >= 0);
+
+    create_nodes(u);
 
     return 0;
 
@@ -2545,6 +2577,9 @@ void pa__done(pa_module *m) {
 
     if (!(u = m->userdata))
         return;
+
+    if (u->nodes)
+        pa_dynarray_free(u->nodes);
 
     stop_thread(u);
 
