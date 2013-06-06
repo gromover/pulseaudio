@@ -26,8 +26,10 @@
 #include <pulse/xmalloc.h>
 
 #include <pulsecore/core-util.h>
+#include <pulsecore/dynarray.h>
 #include <pulsecore/i18n.h>
 #include <pulsecore/modargs.h>
+#include <pulsecore/port-node.h>
 #include <pulsecore/queue.h>
 
 #include <modules/reserve-wrap.h>
@@ -116,6 +118,7 @@ struct userdata {
     pa_alsa_fdlist *mixer_fdl;
 
     pa_card *card;
+    pa_dynarray *nodes;
 
     pa_modargs *modargs;
 
@@ -613,6 +616,8 @@ int pa__init(pa_module *m) {
     const char *profile = NULL;
     char *fn = NULL;
     pa_bool_t namereg_fail = FALSE;
+    void *state;
+    pa_device_port *port;
 
     pa_alsa_refcnt_inc();
 
@@ -766,6 +771,24 @@ int pa__init(pa_module *m) {
                     "is abused (i.e. fixes are not pushed to ALSA), the decibel fix feature may be removed in some future "
                     "PulseAudio version.", u->card->name);
 
+    u->nodes = pa_dynarray_new((pa_free_cb_t) pa_port_node_free);
+
+    PA_HASHMAP_FOREACH(port, u->card->ports, state) {
+        pa_port_node *node;
+
+        if ((node = pa_port_node_new(port, port->direction == PA_DIRECTION_OUTPUT ? "alsa-output" : "alsa-input")))
+            pa_dynarray_append(u->nodes, node);
+        else {
+            /* We could perhaps just ignore failures, but it's nice to be able
+             * to assume that nodes exist either for all or none of the
+             * ports. */
+            pa_log("Failed to create a node for port %s. Removing all nodes of card %s.", port->name, u->card->name);
+            pa_dynarray_free(u->nodes);
+            u->nodes = NULL;
+            break;
+        }
+    }
+
     return 0;
 
 fail:
@@ -804,6 +827,9 @@ void pa__done(pa_module*m) {
 
     if (!(u = m->userdata))
         goto finish;
+
+    if (u->nodes)
+        pa_dynarray_free(u->nodes);
 
     if (u->sink_input_put_hook_slot)
         pa_hook_slot_free(u->sink_input_put_hook_slot);

@@ -37,6 +37,7 @@
 #include <pulsecore/core.h>
 #include <pulsecore/i18n.h>
 #include <pulsecore/module.h>
+#include <pulsecore/source-node.h>
 #include <pulsecore/memchunk.h>
 #include <pulsecore/sink.h>
 #include <pulsecore/modargs.h>
@@ -84,6 +85,7 @@ struct userdata {
     pa_core *core;
     pa_module *module;
     pa_source *source;
+    pa_source_node *source_node;
 
     pa_thread *thread;
     pa_thread_mq thread_mq;
@@ -1739,6 +1741,7 @@ pa_source *pa_alsa_source_new(pa_module *m, pa_modargs *ma, const char*driver, p
     pa_source_new_data data;
     pa_alsa_profile_set *profile_set = NULL;
     void *state = NULL;
+    bool belong_to_card = !!mapping;
 
     pa_assert(m);
     pa_assert(ma);
@@ -2090,6 +2093,9 @@ pa_source *pa_alsa_source_new(pa_module *m, pa_modargs *ma, const char*driver, p
 
     pa_source_put(u->source);
 
+    if (!belong_to_card)
+        u->source_node = pa_source_node_new(u->source, "alsa-input");
+
     if (profile_set)
         pa_alsa_profile_set_free(profile_set);
 
@@ -2109,6 +2115,9 @@ fail:
 
 static void userdata_free(struct userdata *u) {
     pa_assert(u);
+
+    if (u->source_node)
+        pa_source_node_free(u->source_node);
 
     if (u->source)
         pa_source_unlink(u->source);
